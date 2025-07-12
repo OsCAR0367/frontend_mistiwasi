@@ -53,7 +53,7 @@ class SupabaseService {
             ),
             usuario:encargado_id(id, nombre)
           ''')
-          .in_('estado', ['confirmado', 'check_in'])
+          .inFilter('estado', ['confirmado', 'check_in'])
           .order('fecha_entrada');
       
       return List<Map<String, dynamic>>.from(response);

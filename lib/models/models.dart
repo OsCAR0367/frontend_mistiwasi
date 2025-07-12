@@ -6,7 +6,7 @@ enum EstadoReserva { confirmado, check_in, check_out, cancelado, no_show }
 enum CanalReserva { telefono, presencial, web, airbnb, booking, otro }
 enum CategoriaGasto { lavanderia, telefono, minibar, transporte, multa, otro }
 enum CategoriaInventario { ropa_cama, blancos, mobiliario, decoracion, limpieza, amenities }
-enum EstadoInventario { nuevo, bueno, regular, malo, dañado }
+enum EstadoInventario { nuevo, bueno, regular, malo, danado }
 
 // === EXTENSIONES PARA ENUMS ===
 extension TipoHabitacionExtension on TipoHabitacion {
@@ -392,7 +392,7 @@ class ItemInventario {
         return 'Regular';
       case EstadoInventario.malo:
         return 'Malo';
-      case EstadoInventario.dañado:
+      case EstadoInventario.danado:
         return 'Dañado';
     }
   }

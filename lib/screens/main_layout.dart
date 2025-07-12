@@ -1,3 +1,4 @@
+// lib/screens/main_layout.dart
 import 'package:flutter/material.dart';
 import 'dashboard_screen.dart';
 import 'ocupacion_screen.dart';
