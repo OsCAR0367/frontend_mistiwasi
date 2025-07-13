@@ -216,15 +216,21 @@ class SupabaseService {
   // === DASHBOARD ===
   static Future<Map<String, dynamic>> getDashboardStats() async {
     try {
+      print('🔄 Obteniendo estadísticas del dashboard...');
+      
       // Estadísticas rápidas
       final habitaciones = await getHabitaciones();
       final reservasActivas = await getReservasActivas();
+      
+      print('📊 Habitaciones obtenidas: ${habitaciones.length}');
+      print('📋 Reservas activas: ${reservasActivas.length}');
       
       // Contar por estado
       int libres = 0, reservadas = 0, ocupadas = 0, limpieza = 0, mantenimiento = 0;
       
       for (var habitacion in habitaciones) {
-        switch (habitacion['estado']) {
+        final estado = habitacion['estado']?.toString() ?? 'libre';
+        switch (estado) {
           case 'libre':
             libres++;
             break;
@@ -243,7 +249,7 @@ class SupabaseService {
         }
       }
 
-      return {
+      final result = {
         'total_habitaciones': habitaciones.length,
         'habitaciones_libres': libres,
         'habitaciones_reservadas': reservadas,
@@ -253,7 +259,11 @@ class SupabaseService {
         'reservas_activas': reservasActivas.length,
         'habitaciones': habitaciones,
       };
+      
+      print('✅ Stats calculadas: $result');
+      return result;
     } catch (e) {
+      print('❌ Error en getDashboardStats: $e');
       throw Exception('Error al obtener estadísticas del dashboard: $e');
     }
   }

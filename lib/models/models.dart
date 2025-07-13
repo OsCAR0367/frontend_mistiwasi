@@ -95,16 +95,43 @@ class Propiedad {
   });
 
   factory Propiedad.fromJson(Map<String, dynamic> json) {
-    return Propiedad(
-      id: json['id'],
-      nombre: json['nombre'],
-      direccion: json['direccion'],
-      totalHabitaciones: json['total_habitaciones'],
-      propietarioId: json['propietario_id'],
-      activa: json['activa'] ?? true,
-      fechaCreacion: DateTime.parse(json['fecha_creacion']),
-      totalPisos: json['total_pisos'] ?? 1,
-    );
+    try {
+      return Propiedad(
+        id: json['id']?.toString() ?? '',
+        nombre: json['nombre']?.toString() ?? '',
+        direccion: json['direccion']?.toString() ?? '',
+        totalHabitaciones: _parseInt(json['total_habitaciones']),
+        propietarioId: json['propietario_id']?.toString(),
+        activa: json['activa'] == true || json['activa']?.toString() == 'true',
+        fechaCreacion: _parseDateTime(json['fecha_creacion']),
+        totalPisos: _parseInt(json['total_pisos']) == 0 ? 1 : _parseInt(json['total_pisos']),
+      );
+    } catch (e) {
+      print('❌ Error parsing Propiedad: $e');
+      print('📄 JSON data: $json');
+      rethrow;
+    }
+  }
+
+  // Helper methods para parsing seguro
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
   }
 }
 
@@ -142,25 +169,60 @@ class Habitacion {
   });
 
   factory Habitacion.fromJson(Map<String, dynamic> json) {
-    return Habitacion(
-      id: json['id'],
-      propiedadId: json['propiedad_id'],
-      numero: json['numero'],
-      tipo: TipoHabitacionExtension.fromString(json['tipo']),
-      precioNoche: (json['precio_noche'] as num).toDouble(),
-      capacidadMaxima: json['capacidad_maxima'],
-      estado: EstadoHabitacionExtension.fromString(json['estado']),
-      observaciones: json['observaciones'],
-      detalle: json['detalle'],
-      piso: json['piso'] ?? 1,
-      wifiPassword: json['wifi_password'],
-      activa: json['activa'] ?? true,
-      fechaCreacion: DateTime.parse(json['fecha_creacion']),
-      propiedad: json['propiedad'] != null ? Propiedad.fromJson(json['propiedad']) : null,
-    );
+    try {
+      return Habitacion(
+        id: json['id']?.toString() ?? '',
+        propiedadId: json['propiedad_id']?.toString() ?? '',
+        numero: json['numero']?.toString() ?? '',
+        tipo: TipoHabitacionExtension.fromString(json['tipo']?.toString() ?? 'normal'),
+        precioNoche: _parseDouble(json['precio_noche']),
+        capacidadMaxima: _parseInt(json['capacidad_maxima']),
+        estado: EstadoHabitacionExtension.fromString(json['estado']?.toString() ?? 'libre'),
+        observaciones: json['observaciones']?.toString(),
+        detalle: json['detalle']?.toString(),
+        piso: _parseInt(json['piso']) == 0 ? 1 : _parseInt(json['piso']),
+        wifiPassword: json['wifi_password']?.toString(),
+        activa: json['activa'] == true || json['activa']?.toString() == 'true',
+        fechaCreacion: _parseDateTime(json['fecha_creacion']),
+        propiedad: json['propiedad'] != null ? Propiedad.fromJson(json['propiedad']) : null,
+      );
+    } catch (e) {
+      print('❌ Error parsing Habitacion: $e');
+      print('📄 JSON data: $json');
+      rethrow;
+    }
   }
 
   String get numeroCompleto => '$numero (${propiedad?.nombre ?? ''})';
+
+  // Helper methods para parsing seguro
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is String) {
+      try {
+        return DateTime.parse(value);
+      } catch (e) {
+        return DateTime.now();
+      }
+    }
+    return DateTime.now();
+  }
 }
 
 class Cliente {

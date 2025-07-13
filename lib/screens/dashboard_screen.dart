@@ -5,6 +5,7 @@ import '../providers/dashboard_provider.dart';
 import '../models/models.dart';
 import '../widgets/habitacion_card.dart';
 import '../widgets/stats_card.dart';
+import 'nueva_reserva_dialog.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -107,6 +108,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     Row(
                       children: [
+                        // Botón Nueva Reserva
+                        ElevatedButton.icon(
+                          onPressed: () => _mostrarNuevaReserva(),
+                          icon: const Icon(Icons.add),
+                          label: const Text('Nueva Reserva'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4CAF50),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
                         IconButton(
                           onPressed: () => provider.cargarDashboard(),
                           icon: const Icon(Icons.refresh),
@@ -333,7 +349,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   itemCount: habitacionesPropiedad.length,
                                   itemBuilder: (context, index) {
                                     final habitacion = habitacionesPropiedad[index];
-                                    return HabitacionCard(habitacion: habitacion);
+                                    return HabitacionCard(
+                                      habitacion: habitacion,
+                                      onTap: () => _mostrarNuevaReserva(habitacion),
+                                    );
                                   },
                                 ),
                         ),
@@ -372,6 +391,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _mostrarNuevaReserva([Habitacion? habitacion]) {
+    showDialog(
+      context: context,
+      builder: (context) => NuevaReservaDialog(
+        habitacionPreseleccionada: habitacion,
       ),
     );
   }

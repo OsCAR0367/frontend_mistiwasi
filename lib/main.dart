@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:window_manager/window_manager.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+// Solo importar window_manager si NO es web
+import 'package:window_manager/window_manager.dart';
 
 // Services
 import 'services/supabase_service.dart';
@@ -18,30 +21,40 @@ import 'screens/main_layout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Configurar ventana para desktop
-  await windowManager.ensureInitialized();
-  
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1400, 800),
-    minimumSize: Size(1200, 700),
-    center: true,
-    backgroundColor: Colors.transparent,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.normal,
-    title: 'MistiWasi - Sistema de Gestión',
-  );
-  
-  windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+ 
+  // Configurar ventana solo para desktop (no web)
+  if (!kIsWeb) {
+    try {
+      await windowManager.ensureInitialized();
+      
+      WindowOptions windowOptions = const WindowOptions(
+        size: Size(1400, 800),
+        minimumSize: Size(1200, 700),
+        center: true,
+        backgroundColor: Colors.transparent,
+        skipTaskbar: false,
+        titleBarStyle: TitleBarStyle.normal,
+        title: 'MistiWasi - Sistema de Gestión',
+      );
+      
+      windowManager.waitUntilReadyToShow(windowOptions, () async {
+        await windowManager.show();
+        await windowManager.focus();
+      });
+    } catch (e) {
+      print('Error configurando ventana: $e');
+    }
+  }
 
   // Inicializar Supabase
-  await Supabase.initialize(
-    url: 'https://jopucpjkfzhaxnwkfwuh.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvcHVjcGprZnpoYXhud2tmd3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxNjY5MDksImV4cCI6MjA2Nzc0MjkwOX0.T4kNbDHusGSJriRkd1Nbr9eI17FWUeSwenvwZZT1iRI',
-  );
+  try {
+    await Supabase.initialize(
+      url: 'https://jopucpjkfzhaxnwkfwuh.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvcHVjcGprZnpoYXhud2tmd3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxNjY5MDksImV4cCI6MjA2Nzc0MjkwOX0.T4kNbDHusGSJriRkd1Nbr9eI17FWUeSwenvwZZT1iRI',
+    );
+  } catch (e) {
+    print('Error inicializando Supabase: $e');
+  }
 
   runApp(const MistiWasiApp());
 }
