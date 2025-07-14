@@ -150,7 +150,21 @@ class ReservasProvider with ChangeNotifier {
 
   List<Reserva> reservasPorDia(DateTime dia) {
     try {
-      return reservasMesFiltradas.where((reserva) {
+      final fechaDia = DateTime(dia.year, dia.month, dia.day);
+      
+      final reservasFiltradas = reservasMesFiltradas.where((reserva) {
+        // Excluir reservas que ya terminaron su proceso
+        if (reserva.estado == EstadoReserva.cancelado || 
+            reserva.estado == EstadoReserva.no_show ||
+            reserva.estado == EstadoReserva.check_out) {
+          // Debug: registrar reservas excluidas
+          if (reserva.estado == EstadoReserva.check_out) {
+            print('🚫 Reserva ${reserva.id} excluida del calendario - Estado: ${reserva.estado.name}');
+          }
+          return false;
+        }
+        
+        // Para reservas activas (confirmado, check-in)
         final fechaEntrada = DateTime(
           reserva.fechaEntrada.year,
           reserva.fechaEntrada.month,
@@ -161,14 +175,20 @@ class ReservasProvider with ChangeNotifier {
           reserva.fechaSalida.month,
           reserva.fechaSalida.day,
         );
-        final fechaDia = DateTime(dia.year, dia.month, dia.day);
         
-        // La reserva incluye el día si:
-        // - El día es igual o posterior a la fecha de entrada
-        // - El día es anterior a la fecha de salida (check-out no incluye el último día)
-        return (fechaDia.isAtSameMomentAs(fechaEntrada) || fechaDia.isAfter(fechaEntrada)) &&
+        // La reserva se muestra si el día está dentro del rango de la estadía
+        final enRango = (fechaDia.isAtSameMomentAs(fechaEntrada) || fechaDia.isAfter(fechaEntrada)) &&
                fechaDia.isBefore(fechaSalida);
+               
+        if (enRango) {
+          print('✅ Reserva ${reserva.id} incluida para ${fechaDia.day}/${fechaDia.month} - Estado: ${reserva.estado.name}');
+        }
+        
+        return enRango;
       }).toList();
+      
+      print('📅 Reservas para ${fechaDia.day}/${fechaDia.month}: ${reservasFiltradas.length}');
+      return reservasFiltradas;
     } catch (e) {
       print('Error en reservasPorDia: $e');
       return [];

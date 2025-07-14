@@ -665,10 +665,13 @@ class SupabaseService {
   }
 
   // === OBTENER HABITACIONES EN LIMPIEZA Y MANTENIMIENTO ===
-  static Future<List<Map<String, dynamic>>> getHabitacionesLimpiezaMantenimiento(DateTime fecha) async {
+  static Future<List<Map<String, dynamic>>>
+  getHabitacionesLimpiezaMantenimiento(DateTime fecha) async {
     try {
-      print('🔍 Buscando habitaciones en limpieza/mantenimiento para ${DateFormat('dd/MM/yyyy').format(fecha)}');
-      
+      print(
+        '🔍 Buscando habitaciones en limpieza/mantenimiento para ${DateFormat('dd/MM/yyyy').format(fecha)}',
+      );
+
       final habitaciones = await _client
           .from('habitacion')
           .select('''
@@ -679,7 +682,9 @@ class SupabaseService {
           .inFilter('estado', ['limpieza', 'mantenimiento'])
           .order('numero');
 
-      print('🏨 Habitaciones en limpieza/mantenimiento encontradas: ${habitaciones.length}');
+      print(
+        '🏨 Habitaciones en limpieza/mantenimiento encontradas: ${habitaciones.length}',
+      );
 
       // Transformar datos para el calendario
       final habitacionesFormateadas = habitaciones.map((h) {
