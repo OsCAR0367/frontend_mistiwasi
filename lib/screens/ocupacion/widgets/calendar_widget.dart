@@ -140,21 +140,37 @@ class CalendarWidget extends StatelessWidget {
     bool esHoy,
   ) {
     final hasReservations = reservas.isNotEmpty;
+    
+    // Contar reservas por estado
+    final reservasConfirmadas = reservas.where((r) => r.estado == EstadoReserva.confirmado).length;
+    final reservasCheckIn = reservas.where((r) => r.estado == EstadoReserva.check_in).length;
+    
+    // Determinar color principal basado en el estado más prioritario
+    Color colorPrincipal = const Color(0xFF4CAF50);
+    if (reservasCheckIn > 0) {
+      colorPrincipal = const Color(0xFF2196F3); // Azul para check-in activos
+    } else if (reservasConfirmadas > 0) {
+      colorPrincipal = const Color(0xFF4CAF50); // Verde para confirmados
+    }
 
     return Container(
       margin: const EdgeInsets.all(1),
       decoration: BoxDecoration(
         color: esHoy
-            ? const Color(0xFF4CAF50).withOpacity(0.1)
-            : Colors.grey.shade50,
+            ? colorPrincipal.withOpacity(0.1)
+            : hasReservations 
+                ? colorPrincipal.withOpacity(0.05)
+                : Colors.grey.shade50,
         borderRadius: BorderRadius.circular(12),
         border: esHoy
-            ? Border.all(color: const Color(0xFF4CAF50), width: 2)
-            : null,
+            ? Border.all(color: colorPrincipal, width: 2)
+            : hasReservations
+                ? Border.all(color: colorPrincipal.withOpacity(0.3), width: 1)
+                : null,
         boxShadow: hasReservations
             ? [
                 BoxShadow(
-                  color: const Color(0xFF4CAF50).withOpacity(0.2),
+                  color: colorPrincipal.withOpacity(0.2),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -176,27 +192,48 @@ class CalendarWidget extends StatelessWidget {
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: esHoy
-                        ? const Color(0xFF4CAF50)
-                        : const Color(0xFF1A1A1A),
+                        ? colorPrincipal
+                        : hasReservations
+                            ? colorPrincipal.withOpacity(0.8)
+                            : const Color(0xFF1A1A1A),
                     fontSize: 14,
                   ),
                 ),
                 if (hasReservations) ...[
                   const SizedBox(height: 4),
-                  Container(
-                    width: 20,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4CAF50),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                  // Indicador visual más detallado
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (reservasCheckIn > 0) ...[
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2196F3),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                      ],
+                      if (reservasConfirmadas > 0) ...[
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4CAF50),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${reservas.length}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10,
-                      color: Color(0xFF4CAF50),
+                      color: colorPrincipal,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

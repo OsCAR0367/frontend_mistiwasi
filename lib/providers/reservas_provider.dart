@@ -37,6 +37,12 @@ class ReservasProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Método para forzar actualización del calendario
+  void actualizarCalendario() {
+    print('🔄 Forzando actualización del calendario...');
+    notifyListeners();
+  }
+
   Future<void> cargarDatos() async {
     await Future.wait([
       cargarPropiedades(),
@@ -151,16 +157,23 @@ class ReservasProvider with ChangeNotifier {
   List<Reserva> reservasPorDia(DateTime dia) {
     try {
       final fechaDia = DateTime(dia.year, dia.month, dia.day);
+      print('\n📅 === ANÁLISIS DE RESERVAS PARA ${fechaDia.day}/${fechaDia.month}/${fechaDia.year} ===');
+      print('🔍 Total reservas del mes: ${reservasMesFiltradas.length}');
       
       final reservasFiltradas = reservasMesFiltradas.where((reserva) {
+        print('\n--- Analizando reserva ${reserva.id} ---');
+        print('🏠 Habitación: ${reserva.habitacionId}');
+        print('👤 Cliente: ${reserva.cliente?.nombre ?? 'N/A'}');
+        print('📅 Entrada: ${reserva.fechaEntrada.day}/${reserva.fechaEntrada.month}/${reserva.fechaEntrada.year}');
+        print('📅 Salida: ${reserva.fechaSalida.day}/${reserva.fechaSalida.month}/${reserva.fechaSalida.year}');
+        print('🎯 Estado: ${reserva.estado.name}');
+        
         // Excluir reservas que ya terminaron su proceso
         if (reserva.estado == EstadoReserva.cancelado || 
             reserva.estado == EstadoReserva.no_show ||
             reserva.estado == EstadoReserva.check_out) {
           // Debug: registrar reservas excluidas
-          if (reserva.estado == EstadoReserva.check_out) {
-            print('🚫 Reserva ${reserva.id} excluida del calendario - Estado: ${reserva.estado.name}');
-          }
+          print('🚫 EXCLUIDA - Estado terminal: ${reserva.estado.name}');
           return false;
         }
         
@@ -176,21 +189,43 @@ class ReservasProvider with ChangeNotifier {
           reserva.fechaSalida.day,
         );
         
-        // La reserva se muestra si el día está dentro del rango de la estadía
-        final enRango = (fechaDia.isAtSameMomentAs(fechaEntrada) || fechaDia.isAfter(fechaEntrada)) &&
-               fechaDia.isBefore(fechaSalida);
+        print('🔍 Comparando:');
+        print('   Día solicitado: ${fechaDia.day}/${fechaDia.month}/${fechaDia.year}');
+        print('   Entrada normalizada: ${fechaEntrada.day}/${fechaEntrada.month}/${fechaEntrada.year}');
+        print('   Salida normalizada: ${fechaSalida.day}/${fechaSalida.month}/${fechaSalida.year}');
+        
+        // La reserva se muestra durante todo el período de estadía
+        // Desde el día de entrada hasta el día de salida (inclusive)
+        // Solo se oculta cuando se hace check-out efectivo
+        final despuesDeEntrada = fechaDia.isAtSameMomentAs(fechaEntrada) || fechaDia.isAfter(fechaEntrada);
+        final antesDeSalida = fechaDia.isBefore(fechaSalida) || fechaDia.isAtSameMomentAs(fechaSalida);
+        final enRango = despuesDeEntrada && antesDeSalida;
+        
+        print('   ¿Después/igual entrada? $despuesDeEntrada');
+        print('   ¿Antes/igual salida? $antesDeSalida');
+        print('   ¿En rango? $enRango');
                
         if (enRango) {
-          print('✅ Reserva ${reserva.id} incluida para ${fechaDia.day}/${fechaDia.month} - Estado: ${reserva.estado.name}');
+          print('✅ INCLUIDA - Reserva en período de estadía');
+        } else {
+          print('❌ EXCLUIDA - Fuera del período de estadía');
         }
         
         return enRango;
       }).toList();
       
-      print('📅 Reservas para ${fechaDia.day}/${fechaDia.month}: ${reservasFiltradas.length}');
+      print('\n� RESULTADO FINAL:');
+      print('🎯 Reservas encontradas para ${fechaDia.day}/${fechaDia.month}: ${reservasFiltradas.length}');
+      if (reservasFiltradas.isNotEmpty) {
+        for (final reserva in reservasFiltradas) {
+          print('   - ${reserva.habitacionId} (${reserva.estado.name})');
+        }
+      }
+      print('=== FIN ANÁLISIS ===\n');
+      
       return reservasFiltradas;
     } catch (e) {
-      print('Error en reservasPorDia: $e');
+      print('❌ Error en reservasPorDia: $e');
       return [];
     }
   }

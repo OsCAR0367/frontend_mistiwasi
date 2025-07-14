@@ -30,8 +30,14 @@ lib/screens/ocupacion/
 - **Responsabilidad**: Renderizado del calendario mensual
 - **Funciones**:
   - Grid de días del mes
-  - Indicadores visuales de reservas
+  - Indicadores visuales de reservas durante todo el período de estadía
+  - Visualización diferenciada por estado (confirmado vs check-in)
   - Interacción para abrir detalles del día
+- **Lógica de Ocupación**: 
+  - Las reservas se muestran desde el día de entrada hasta el día de salida (inclusive)
+  - La habitación se considera ocupada hasta que se realiza el check-out efectivo
+  - Colores diferenciados: Verde para confirmadas, Azul para check-in activas
+  - Indicadores circulares muestran el estado de cada reserva
 
 ### 3. DayDetailsDialog (dialogs/day_details_dialog.dart)
 - **Responsabilidad**: Diálogo modal con 3 pestañas
@@ -90,6 +96,32 @@ lib/screens/ocupacion/
 - Múltiples desarrolladores pueden trabajar en paralelo
 - Conflictos de merge reducidos
 - Código más legible y documentado
+
+## Funcionalidad de Ocupación Extendida
+
+### Visualización de Períodos de Reserva
+El calendario ahora muestra las reservas durante **todo el período de estadía**:
+
+- **Período Mostrado**: Desde el día de entrada hasta el día de salida (inclusive)
+- **Lógica Hotelera**: La habitación está ocupada hasta que se realiza el check-out efectivo
+- **Estados Visuales**:
+  - 🟢 **Verde**: Reservas confirmadas
+  - 🔵 **Azul**: Huéspedes con check-in activo
+  - 🔴 **Rojo**: (Futuro) Reservas con problemas
+
+### Indicadores Mejorados
+- **Puntos de color** muestran el estado de cada reserva
+- **Borde coloreado** para días con ocupación
+- **Sombra sutil** resalta días con actividad
+- **Contador numérico** indica cantidad de reservas por día
+
+### Ejemplos de Uso
+```
+Reserva del 14 al 15 de julio:
+- Día 14: ✅ Mostrada (entrada/check-in)
+- Día 15: ✅ Mostrada (ocupada hasta check-out)
+- Después del check-out: ❌ No mostrada (disponible)
+```
 
 ## Migración del Código Original
 
