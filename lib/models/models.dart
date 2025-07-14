@@ -1,11 +1,25 @@
 // === ENUMS ===
 enum TipoHabitacion { normal, doble, triple, departamento, monoambiente }
+
 enum EstadoHabitacion { libre, reservado, ocupado, limpieza, mantenimiento }
+
 enum MetodoPago { efectivo, transferencia, tarjeta, yape, plin, otro }
+
 enum EstadoReserva { confirmado, check_in, check_out, cancelado, no_show }
+
 enum CanalReserva { telefono, presencial, web, airbnb, booking, otro }
+
 enum CategoriaGasto { lavanderia, telefono, minibar, transporte, multa, otro }
-enum CategoriaInventario { ropa_cama, blancos, mobiliario, decoracion, limpieza, amenities }
+
+enum CategoriaInventario {
+  ropa_cama,
+  blancos,
+  mobiliario,
+  decoracion,
+  limpieza,
+  amenities,
+}
+
 enum EstadoInventario { nuevo, bueno, regular, malo, danado }
 
 // === EXTENSIONES PARA ENUMS ===
@@ -104,7 +118,9 @@ class Propiedad {
         propietarioId: json['propietario_id']?.toString(),
         activa: json['activa'] == true || json['activa']?.toString() == 'true',
         fechaCreacion: _parseDateTime(json['fecha_creacion']),
-        totalPisos: _parseInt(json['total_pisos']) == 0 ? 1 : _parseInt(json['total_pisos']),
+        totalPisos: _parseInt(json['total_pisos']) == 0
+            ? 1
+            : _parseInt(json['total_pisos']),
       );
     } catch (e) {
       print('❌ Error parsing Propiedad: $e');
@@ -150,6 +166,7 @@ class Habitacion {
   final bool activa;
   final DateTime fechaCreacion;
   final Propiedad? propiedad;
+  final Map<String, dynamic>? reservaActual; // Nueva propiedad
 
   Habitacion({
     required this.id,
@@ -166,6 +183,7 @@ class Habitacion {
     required this.activa,
     required this.fechaCreacion,
     this.propiedad,
+    this.reservaActual, // Nueva propiedad
   });
 
   factory Habitacion.fromJson(Map<String, dynamic> json) {
@@ -174,17 +192,24 @@ class Habitacion {
         id: json['id']?.toString() ?? '',
         propiedadId: json['propiedad_id']?.toString() ?? '',
         numero: json['numero']?.toString() ?? '',
-        tipo: TipoHabitacionExtension.fromString(json['tipo']?.toString() ?? 'normal'),
+        tipo: TipoHabitacionExtension.fromString(
+          json['tipo']?.toString() ?? 'normal',
+        ),
         precioNoche: _parseDouble(json['precio_noche']),
         capacidadMaxima: _parseInt(json['capacidad_maxima']),
-        estado: EstadoHabitacionExtension.fromString(json['estado']?.toString() ?? 'libre'),
+        estado: EstadoHabitacionExtension.fromString(
+          json['estado']?.toString() ?? 'libre',
+        ),
         observaciones: json['observaciones']?.toString(),
         detalle: json['detalle']?.toString(),
         piso: _parseInt(json['piso']) == 0 ? 1 : _parseInt(json['piso']),
         wifiPassword: json['wifi_password']?.toString(),
         activa: json['activa'] == true || json['activa']?.toString() == 'true',
         fechaCreacion: _parseDateTime(json['fecha_creacion']),
-        propiedad: json['propiedad'] != null ? Propiedad.fromJson(json['propiedad']) : null,
+        propiedad: json['propiedad'] != null
+            ? Propiedad.fromJson(json['propiedad'])
+            : null,
+        reservaActual: json['reserva_actual'], // Nueva propiedad
       );
     } catch (e) {
       print('❌ Error parsing Habitacion: $e');
@@ -269,8 +294,8 @@ class Cliente {
       notas: json['notas'],
       blacklist: json['blacklist'] ?? false,
       fechaRegistro: DateTime.parse(json['fecha_registro']),
-      fechaUltimaEstadia: json['fecha_ultima_estadia'] != null 
-          ? DateTime.parse(json['fecha_ultima_estadia']) 
+      fechaUltimaEstadia: json['fecha_ultima_estadia'] != null
+          ? DateTime.parse(json['fecha_ultima_estadia'])
           : null,
       totalEstadias: json['total_estadias'] ?? 0,
     );
@@ -347,23 +372,31 @@ class Reserva {
       total: (json['total'] as num).toDouble(),
       adelanto: (json['adelanto'] as num).toDouble(),
       saldoPendiente: (json['saldo_pendiente'] as num).toDouble(),
-      metodoPagoAdelanto: json['metodo_pago_adelanto'] != null 
-          ? MetodoPago.values.firstWhere((e) => e.name == json['metodo_pago_adelanto'])
+      metodoPagoAdelanto: json['metodo_pago_adelanto'] != null
+          ? MetodoPago.values.firstWhere(
+              (e) => e.name == json['metodo_pago_adelanto'],
+            )
           : null,
       estado: EstadoReserva.values.firstWhere((e) => e.name == json['estado']),
-      canalReserva: json['canal_reserva'] != null 
-          ? CanalReserva.values.firstWhere((e) => e.name == json['canal_reserva'])
+      canalReserva: json['canal_reserva'] != null
+          ? CanalReserva.values.firstWhere(
+              (e) => e.name == json['canal_reserva'],
+            )
           : null,
       observaciones: json['observaciones'],
       fechaCreacion: DateTime.parse(json['fecha_creacion']),
-      fechaCheckIn: json['fecha_check_in'] != null 
-          ? DateTime.parse(json['fecha_check_in']) 
+      fechaCheckIn: json['fecha_check_in'] != null
+          ? DateTime.parse(json['fecha_check_in'])
           : null,
-      fechaCheckOut: json['fecha_check_out'] != null 
-          ? DateTime.parse(json['fecha_check_out']) 
+      fechaCheckOut: json['fecha_check_out'] != null
+          ? DateTime.parse(json['fecha_check_out'])
           : null,
-      cliente: json['cliente'] != null ? Cliente.fromJson(json['cliente']) : null,
-      habitacion: json['habitacion'] != null ? Habitacion.fromJson(json['habitacion']) : null,
+      cliente: json['cliente'] != null
+          ? Cliente.fromJson(json['cliente'])
+          : null,
+      habitacion: json['habitacion'] != null
+          ? Habitacion.fromJson(json['habitacion'])
+          : null,
     );
   }
 
@@ -408,22 +441,28 @@ class ItemInventario {
     return ItemInventario(
       id: json['id'],
       habitacionId: json['habitacion_id'],
-      categoria: CategoriaInventario.values.firstWhere((e) => e.name == json['categoria']),
+      categoria: CategoriaInventario.values.firstWhere(
+        (e) => e.name == json['categoria'],
+      ),
       articulo: json['articulo'],
       descripcion: json['descripcion'],
       cantidad: json['cantidad'],
-      estado: EstadoInventario.values.firstWhere((e) => e.name == json['estado']),
-      fechaUltimaRevision: json['fecha_ultima_revision'] != null 
-          ? DateTime.parse(json['fecha_ultima_revision']) 
+      estado: EstadoInventario.values.firstWhere(
+        (e) => e.name == json['estado'],
+      ),
+      fechaUltimaRevision: json['fecha_ultima_revision'] != null
+          ? DateTime.parse(json['fecha_ultima_revision'])
           : null,
       necesitaReposicion: json['necesita_reposicion'] ?? false,
-      precioUnitario: json['precio_unitario'] != null 
-          ? (json['precio_unitario'] as num).toDouble() 
+      precioUnitario: json['precio_unitario'] != null
+          ? (json['precio_unitario'] as num).toDouble()
           : null,
       proveedor: json['proveedor'],
       observaciones: json['observaciones'],
       fechaRegistro: DateTime.parse(json['fecha_registro']),
-      habitacion: json['habitacion'] != null ? Habitacion.fromJson(json['habitacion']) : null,
+      habitacion: json['habitacion'] != null
+          ? Habitacion.fromJson(json['habitacion'])
+          : null,
     );
   }
 

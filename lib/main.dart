@@ -26,20 +26,29 @@ void main() async {
   if (!kIsWeb) {
     try {
       await windowManager.ensureInitialized();
-      
+     
       WindowOptions windowOptions = const WindowOptions(
-        size: Size(1400, 800),
-        minimumSize: Size(1200, 700),
+        size: Size(1400, 900),
+        minimumSize: Size(1200, 800),
         center: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Colors.white,
         skipTaskbar: false,
         titleBarStyle: TitleBarStyle.normal,
         title: 'MistiWasi - Sistema de Gestión',
       );
-      
-      windowManager.waitUntilReadyToShow(windowOptions, () async {
+     
+      await windowManager.waitUntilReadyToShow(windowOptions, () async {
         await windowManager.show();
         await windowManager.focus();
+        
+        // Configurar las opciones de ventana después de mostrarla
+        await windowManager.setMaximizable(true);
+        await windowManager.setMinimizable(true);
+        await windowManager.setResizable(true);
+        await windowManager.setClosable(true);
+        await windowManager.setAlwaysOnTop(false);
+        await windowManager.setSkipTaskbar(false);
+        await windowManager.setPreventClose(false);
       });
     } catch (e) {
       print('Error configurando ventana: $e');
@@ -91,6 +100,9 @@ class MistiWasiApp extends StatelessWidget {
             backgroundColor: Colors.transparent,
             foregroundColor: Colors.black87,
           ),
+          // Configuraciones adicionales para mejor apariencia en desktop
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+          splashFactory: InkSparkle.splashFactory,
         ),
         home: const MainLayout(),
       ),

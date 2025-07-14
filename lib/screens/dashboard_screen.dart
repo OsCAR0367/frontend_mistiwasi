@@ -1,9 +1,9 @@
-// lib/screens/dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/dashboard_provider.dart';
 import '../models/models.dart';
 import '../widgets/habitacion_card.dart';
+import 'habitacion_actions_dialog.dart';
 import '../widgets/stats_card.dart';
 import 'nueva_reserva_dialog.dart';
 
@@ -31,9 +31,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         builder: (context, provider, child) {
           if (provider.isLoading) {
             return const Center(
-              child: CircularProgressIndicator(
-                color: Color(0xFF4CAF50),
-              ),
+              child: CircularProgressIndicator(color: Color(0xFF4CAF50)),
             );
           }
 
@@ -168,7 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 32),
 
                 // Estadísticas Generales
@@ -219,9 +217,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                 // Estado por Propiedades
                 ...provider.propiedades.map((propiedad) {
-                  final habitacionesPropiedad = provider.habitacionesPorPropiedad(propiedad.id);
+                  final habitacionesPropiedad = provider
+                      .habitacionesPorPropiedad(propiedad.id);
                   final stats = provider.estadisticasPorPropiedad(propiedad.id);
-                  
+
                   return Container(
                     margin: const EdgeInsets.only(bottom: 32),
                     child: Column(
@@ -249,7 +248,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                                  color: const Color(
+                                    0xFF4CAF50,
+                                  ).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: const Icon(
@@ -284,21 +285,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               // Estadísticas rápidas
                               Row(
                                 children: [
-                                  _buildQuickStat('🟢', stats[EstadoHabitacion.libre] ?? 0),
+                                  _buildQuickStat(
+                                    '🟢',
+                                    stats[EstadoHabitacion.libre] ?? 0,
+                                  ),
                                   const SizedBox(width: 12),
-                                  _buildQuickStat('🟡', stats[EstadoHabitacion.reservado] ?? 0),
+                                  _buildQuickStat(
+                                    '🟡',
+                                    stats[EstadoHabitacion.reservado] ?? 0,
+                                  ),
                                   const SizedBox(width: 12),
-                                  _buildQuickStat('🔴', stats[EstadoHabitacion.ocupado] ?? 0),
+                                  _buildQuickStat(
+                                    '🔴',
+                                    stats[EstadoHabitacion.ocupado] ?? 0,
+                                  ),
                                   const SizedBox(width: 12),
-                                  _buildQuickStat('🟠', stats[EstadoHabitacion.limpieza] ?? 0),
+                                  _buildQuickStat(
+                                    '🟠',
+                                    stats[EstadoHabitacion.limpieza] ?? 0,
+                                  ),
                                   const SizedBox(width: 12),
-                                  _buildQuickStat('🟣', stats[EstadoHabitacion.mantenimiento] ?? 0),
+                                  _buildQuickStat(
+                                    '🟣',
+                                    stats[EstadoHabitacion.mantenimiento] ?? 0,
+                                  ),
                                 ],
                               ),
                             ],
                           ),
                         ),
-                        
+
                         // Grid de habitaciones
                         Container(
                           padding: const EdgeInsets.all(20),
@@ -340,18 +356,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               : GridView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 6,
-                                    childAspectRatio: 1.2,
-                                    crossAxisSpacing: 12,
-                                    mainAxisSpacing: 12,
-                                  ),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 6,
+                                        childAspectRatio: 1.2,
+                                        crossAxisSpacing: 12,
+                                        mainAxisSpacing: 12,
+                                      ),
                                   itemCount: habitacionesPropiedad.length,
                                   itemBuilder: (context, index) {
-                                    final habitacion = habitacionesPropiedad[index];
+                                    final habitacion =
+                                        habitacionesPropiedad[index];
                                     return HabitacionCard(
                                       habitacion: habitacion,
-                                      onTap: () => _mostrarNuevaReserva(habitacion),
+                                      onTap: () =>
+                                          _manejarClickHabitacion(habitacion),
                                     );
                                   },
                                 ),
@@ -378,17 +397,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            emoji,
-            style: const TextStyle(fontSize: 16),
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 16)),
           const SizedBox(width: 4),
           Text(
             count.toString(),
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
           ),
         ],
       ),
@@ -398,8 +411,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void _mostrarNuevaReserva([Habitacion? habitacion]) {
     showDialog(
       context: context,
-      builder: (context) => NuevaReservaDialog(
-        habitacionPreseleccionada: habitacion,
+      builder: (context) =>
+          NuevaReservaDialog(habitacionPreseleccionada: habitacion),
+    );
+  }
+
+  void _manejarClickHabitacion(Habitacion habitacion) {
+    // Si la habitación está libre, mostrar formulario de reserva
+    if (habitacion.estado == EstadoHabitacion.libre) {
+      _mostrarNuevaReserva(habitacion);
+    } else {
+      // Para otros estados, mostrar diálogo de acciones
+      _mostrarAccionesHabitacion(habitacion);
+    }
+  }
+
+  void _mostrarAccionesHabitacion(Habitacion habitacion) {
+    showDialog(
+      context: context,
+      builder: (context) => HabitacionActionsDialog(
+        habitacion: habitacion,
+        reservaActual: habitacion.reservaActual,
       ),
     );
   }
