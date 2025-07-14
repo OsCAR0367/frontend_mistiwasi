@@ -60,6 +60,10 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
     return salida.difference(entrada).inDays;
   }
 
+  // Función helper para obtener la habitación actual (seleccionada o preseleccionada)
+  Habitacion? get _habitacionActual =>
+      _habitacionSeleccionada ?? widget.habitacionPreseleccionada;
+
   @override
   void initState() {
     super.initState();
@@ -332,9 +336,71 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
         const SizedBox(height: 16),
         Consumer<DashboardProvider>(
           builder: (context, provider, child) {
+            // Si hay una habitación preseleccionada, mostrarla como seleccionada
+            if (widget.habitacionPreseleccionada != null) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.hotel, color: const Color(0xFF4CAF50), size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Habitación ${widget.habitacionPreseleccionada!.numero}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          Text(
+                            '${widget.habitacionPreseleccionada!.tipo.displayName} - S/.${widget.habitacionPreseleccionada!.precioNoche.toStringAsFixed(2)} por noche',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _habitacionSeleccionada = null;
+                        });
+                      },
+                      child: const Text('Cambiar'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            // Si no hay habitación preseleccionada, mostrar dropdown
             final habitacionesDisponibles = provider.habitaciones
-                .where((h) => h.estado == EstadoHabitacion.libre)
+                .where(
+                  (h) =>
+                      h.estado == EstadoHabitacion.libre && h.numero.isNotEmpty,
+                )
+                .toSet() // Eliminar duplicados
                 .toList();
+
+            // Asegurarse de que la habitación seleccionada esté en la lista
+            if (_habitacionSeleccionada != null &&
+                !habitacionesDisponibles.contains(_habitacionSeleccionada)) {
+              _habitacionSeleccionada = null;
+            }
 
             if (habitacionesDisponibles.isEmpty) {
               return Container(
@@ -407,7 +473,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
                   return DropdownMenuItem<Habitacion>(
                     value: habitacion,
                     child: Text(
-                      '${habitacion.numero} - ${habitacion.tipo.displayName} - S/.${habitacion.precioNoche}',
+                      '${habitacion.numero} - ${habitacion.tipo.displayName} - S/.${habitacion.precioNoche.toStringAsFixed(2)}',
                       style: const TextStyle(fontSize: 14),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -422,7 +488,8 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
                   });
                 },
                 validator: (value) {
-                  if (value == null) {
+                  if (value == null &&
+                      widget.habitacionPreseleccionada == null) {
                     return 'Debe seleccionar una habitación';
                   }
                   return null;
@@ -1115,7 +1182,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
   Widget _buildSeccionPago() {
     final precioNoche = _precioPersonalizado > 0
         ? _precioPersonalizado
-        : (_habitacionSeleccionada?.precioNoche ?? 0.0);
+        : (_habitacionActual?.precioNoche ?? 0.0);
     final diasEstadia = _calcularDiasEstadia(_fechaEntrada, _fechaSalida);
     final subtotal = precioNoche * diasEstadia;
     final total = subtotal + _costoLimpieza;
@@ -1542,7 +1609,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
       final diasEstadia = _calcularDiasEstadia(_fechaEntrada, _fechaSalida);
       final precioNoche = _precioPersonalizado > 0
           ? _precioPersonalizado
-          : (_habitacionSeleccionada?.precioNoche ?? 0.0);
+          : (_habitacionActual?.precioNoche ?? 0.0);
       final subtotal = precioNoche * diasEstadia;
       final total = subtotal + _costoLimpieza;
 
@@ -1601,8 +1668,10 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
 
   /// Valida todos los datos necesarios para crear la reserva
   String? _validarDatosReserva() {
-    // Validar habitación seleccionada
-    if (_habitacionSeleccionada == null) {
+    // Validar habitación seleccionada (usar preseleccionada si existe)
+    final habitacionAUsar =
+        _habitacionSeleccionada ?? widget.habitacionPreseleccionada;
+    if (habitacionAUsar == null) {
       return 'Debe seleccionar una habitación';
     }
 
@@ -1632,7 +1701,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
     // Validar precios
     final precioNoche = _precioPersonalizado > 0
         ? _precioPersonalizado
-        : (_habitacionSeleccionada?.precioNoche ?? 0.0);
+        : (_habitacionActual?.precioNoche ?? 0.0);
     if (precioNoche <= 0) {
       return 'El precio por noche debe ser mayor a S/. 0.00';
     }
@@ -1721,7 +1790,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
   ) {
     return {
       'cliente_id': clienteId,
-      'habitacion_id': _habitacionSeleccionada!.id,
+      'habitacion_id': _habitacionActual!.id,
       'cantidad_personas': _cantidadPersonas,
       'fecha_entrada': _fechaEntrada.toIso8601String().split('T')[0],
       'fecha_salida': _fechaSalida.toIso8601String().split('T')[0],
@@ -1790,13 +1859,13 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
 
   /// Marca la habitación como en mantenimiento
   Future<void> _marcarComoMantenimiento() async {
-    if (_habitacionSeleccionada == null) return;
+    if (_habitacionActual == null) return;
 
     final confirmar = await ConfirmationDialog.show(
       context: context,
       title: 'Confirmar Mantenimiento',
       message:
-          '¿Desea marcar la habitación ${_habitacionSeleccionada!.numero} como en mantenimiento?',
+          '¿Desea marcar la habitación ${_habitacionActual!.numero} como en mantenimiento?',
       confirmText: 'Marcar en Mantenimiento',
       cancelText: 'Cancelar',
       type: ConfirmationDialogType.warning,
@@ -1808,7 +1877,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
 
       try {
         await SupabaseService.marcarMantenimiento(
-          _habitacionSeleccionada!.id,
+          _habitacionActual!.id,
           'Habitación marcada para mantenimiento desde formulario de reserva',
         );
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../nueva_reserva_dialog.dart';
+import '../../../models/models.dart';
 
 class NewReservationDialog extends StatefulWidget {
   final Map<String, dynamic> habitacion;
@@ -86,48 +88,70 @@ class _NewReservationDialogState extends State<NewReservationDialog> {
   }
 
   Widget _buildContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Formulario de reserva',
-          style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.orange.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.orange.shade200),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.construction, color: Colors.orange.shade600),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'El formulario completo de reservas estará disponible próximamente. '
-                  'Por ahora puedes crear reservas desde la sección principal.',
-                  style: TextStyle(color: Colors.orange.shade800, fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
+    // En lugar de mostrar contenido, abrir directamente el formulario completo
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _abrirFormularioCompleto(context);
+    });
+
+    return const SizedBox.shrink(); // No mostrar contenido
   }
 
   Widget _buildActions(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cerrar'),
-        ),
-      ],
+    return const SizedBox.shrink(); // No mostrar botones ya que se abre automáticamente
+  }
+
+  void _abrirFormularioCompleto(BuildContext context) {
+    // Cerrar el diálogo actual
+    Navigator.of(context).pop();
+
+    // Crear un objeto Habitacion a partir de los datos del mapa
+    final habitacion = _crearHabitacionDesdeMap();
+
+    // Abrir el formulario completo de reservas
+    showDialog(
+      context: context,
+      builder: (context) =>
+          NuevaReservaDialog(habitacionPreseleccionada: habitacion),
+    );
+  }
+
+  Habitacion _crearHabitacionDesdeMap() {
+    // Convertir el Map<String, dynamic> a un objeto Habitacion
+    final numero = widget.habitacion['numero']?.toString() ?? '';
+    final tipo =
+        widget.habitacion['tipo']?.toString().toLowerCase() ?? 'normal';
+    final capacidad = widget.habitacion['capacidad'] ?? 2;
+    final precio = (widget.habitacion['precio'] ?? 90.0).toDouble();
+
+    // Mapear el tipo de habitación
+    TipoHabitacion tipoHabitacion;
+    switch (tipo) {
+      case 'doble':
+        tipoHabitacion = TipoHabitacion.doble;
+        break;
+      case 'triple':
+        tipoHabitacion = TipoHabitacion.triple;
+        break;
+      case 'departamento':
+        tipoHabitacion = TipoHabitacion.departamento;
+        break;
+      case 'monoambiente':
+        tipoHabitacion = TipoHabitacion.monoambiente;
+        break;
+      default:
+        tipoHabitacion = TipoHabitacion.normal;
+    }
+
+    return Habitacion(
+      id: widget.habitacion['id']?.toString() ?? numero,
+      numero: numero,
+      tipo: tipoHabitacion,
+      capacidad: capacidad,
+      precio: precio,
+      estado: EstadoHabitacion.libre,
+      piso: 1,
+      activa: true,
+      fechaCreacion: DateTime.now(),
     );
   }
 }
