@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 
 class SupabaseService {
   static final SupabaseClient _client = Supabase.instance.client;
@@ -30,7 +31,7 @@ class SupabaseService {
     try {
       print('Consultando tabla propiedad...');
       final response = await _client
-          .from('propiedad')  // Nombre en minúsculas
+          .from('propiedad') // Nombre en minúsculas
           .select('*')
           .eq('activa', true)
           .order('nombre');
@@ -47,7 +48,7 @@ class SupabaseService {
   static Future<List<Map<String, dynamic>>> getReservasActivas() async {
     try {
       final response = await _client
-          .from('reserva')  // Tabla en minúsculas
+          .from('reserva') // Tabla en minúsculas
           .select('''
             *,
             cliente:cliente_id(id, nombre, apellido, dni, telefono, email),
@@ -73,10 +74,12 @@ class SupabaseService {
       final startDate = DateTime(year, month, 1);
       final endDate = DateTime(year, month + 1, 0);
 
-      print('Buscando reservas entre ${startDate.toString()} y ${endDate.toString()}');
+      print(
+        'Buscando reservas entre ${startDate.toString()} y ${endDate.toString()}',
+      );
 
       final response = await _client
-          .from('reserva')  // Nombre en minúsculas
+          .from('reserva') // Nombre en minúsculas
           .select('''
             *,
             cliente:cliente_id(id, nombre, apellido, dni, telefono, email),
@@ -85,7 +88,9 @@ class SupabaseService {
               propiedad:propiedad_id(id, nombre)
             )
           ''')
-          .or('and(fecha_entrada.lte.${endDate.toIso8601String().split('T')[0]},fecha_salida.gte.${startDate.toIso8601String().split('T')[0]})')
+          .or(
+            'and(fecha_entrada.lte.${endDate.toIso8601String().split('T')[0]},fecha_salida.gte.${startDate.toIso8601String().split('T')[0]})',
+          )
           .order('fecha_entrada');
 
       print('Reservas encontradas: ${response.length}');
@@ -659,42 +664,48 @@ class SupabaseService {
     }
   }
 
-  // === GESTIÓN DE ESTADOS AVANZADA ===
-  static Future<List<Map<String, dynamic>>>
-  getHabitacionesParaLimpieza() async {
+  // === OBTENER HABITACIONES EN LIMPIEZA Y MANTENIMIENTO ===
+  static Future<List<Map<String, dynamic>>> getHabitacionesLimpiezaMantenimiento(DateTime fecha) async {
     try {
-      final response = await _client
+      print('🔍 Buscando habitaciones en limpieza/mantenimiento para ${DateFormat('dd/MM/yyyy').format(fecha)}');
+      
+      final habitaciones = await _client
           .from('habitacion')
           .select('''
             *,
-            propiedad:propiedad_id(id, nombre)
+            propiedad:propiedad_id(id, nombre, direccion)
           ''')
-          .eq('estado', 'limpieza')
           .eq('activa', true)
+          .inFilter('estado', ['limpieza', 'mantenimiento'])
           .order('numero');
 
-      return List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      throw Exception('Error al obtener habitaciones para limpieza: $e');
-    }
-  }
+      print('🏨 Habitaciones en limpieza/mantenimiento encontradas: ${habitaciones.length}');
 
-  static Future<List<Map<String, dynamic>>>
-  getHabitacionesEnMantenimiento() async {
-    try {
-      final response = await _client
-          .from('habitacion')
-          .select('''
-            *,
-            propiedad:propiedad_id(id, nombre)
-          ''')
-          .eq('estado', 'mantenimiento')
-          .eq('activa', true)
-          .order('numero');
+      // Transformar datos para el calendario
+      final habitacionesFormateadas = habitaciones.map((h) {
+        final propiedad = h['propiedad'] as Map<String, dynamic>?;
+        return {
+          'id': h['id'],
+          'numero': h['numero']?.toString() ?? 'N/A',
+          'tipo': h['tipo']?.toString() ?? 'Estándar',
+          'estado': h['estado']?.toString() ?? 'libre',
+          'precio': (h['precio_noche'] ?? 0).toDouble(),
+          'capacidad': h['capacidad_maxima'] ?? 2,
+          'wifi_password': h['wifi_password'],
+          'propiedad_id': propiedad?['id'],
+          'propiedad_nombre': propiedad?['nombre'] ?? 'Sin propiedad',
+          'propiedad_direccion': propiedad?['direccion'] ?? '',
+        };
+      }).toList();
 
-      return List<Map<String, dynamic>>.from(response);
+      for (final h in habitacionesFormateadas) {
+        print('  - ${h['numero']} (${h['estado']}) - ${h['propiedad_nombre']}');
+      }
+
+      return habitacionesFormateadas;
     } catch (e) {
-      throw Exception('Error al obtener habitaciones en mantenimiento: $e');
+      print('❌ Error al obtener habitaciones en limpieza/mantenimiento: $e');
+      rethrow;
     }
   }
 
@@ -781,8 +792,10 @@ class SupabaseService {
     DateTime fechaSalida,
   ) async {
     try {
-      print('🔍 Buscando habitaciones disponibles para ${fechaEntrada.toIso8601String().split('T')[0]} - ${fechaSalida.toIso8601String().split('T')[0]}');
-      
+      print(
+        '🔍 Buscando habitaciones disponibles para ${fechaEntrada.toIso8601String().split('T')[0]} - ${fechaSalida.toIso8601String().split('T')[0]}',
+      );
+
       // Primero obtener todas las habitaciones activas con información completa
       final todasHabitaciones = await _client
           .from('habitacion')
@@ -800,7 +813,9 @@ class SupabaseService {
           .from('reserva')
           .select('habitacion_id')
           .inFilter('estado', ['confirmado', 'check_in'])
-          .or('and(fecha_entrada.lte.${fechaSalida.toIso8601String().split('T')[0]},fecha_salida.gt.${fechaEntrada.toIso8601String().split('T')[0]})');
+          .or(
+            'and(fecha_entrada.lte.${fechaSalida.toIso8601String().split('T')[0]},fecha_salida.gt.${fechaEntrada.toIso8601String().split('T')[0]})',
+          );
 
       print('🚫 Habitaciones ocupadas: ${habitacionesOcupadas.length}');
 
@@ -828,11 +843,15 @@ class SupabaseService {
           })
           .toList();
 
-      print('✅ Habitaciones disponibles encontradas: ${habitacionesDisponibles.length}');
+      print(
+        '✅ Habitaciones disponibles encontradas: ${habitacionesDisponibles.length}',
+      );
       for (final h in habitacionesDisponibles) {
-        print('  - Hab ${h['numero']} (${h['tipo']}) - ${h['propiedad_nombre']} - S/. ${h['precio']}');
+        print(
+          '  - Hab ${h['numero']} (${h['tipo']}) - ${h['propiedad_nombre']} - S/. ${h['precio']}',
+        );
       }
-      
+
       return habitacionesDisponibles;
     } catch (e) {
       print('❌ Error obteniendo habitaciones disponibles: $e');
