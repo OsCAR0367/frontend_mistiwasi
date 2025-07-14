@@ -319,13 +319,16 @@ class SupabaseService {
           .eq('activa', true)
           .order('numero');
 
-      // 🔍 Obtener TODAS las reservas activas (no solo del día)
+      // 🔍 Obtener TODAS las reservas activas (no solo del día) con información completa del cliente
       final reservasActivas = await _client
           .from('reserva')
           .select('''
             *,
             habitacion:habitacion_id(id, numero),
-            cliente:cliente_id(id, nombre, apellido, dni, telefono, email)
+            cliente:cliente_id(
+              id, nombre, apellido, dni, telefono, email, 
+              fecha_registro
+            )
           ''')
           .inFilter('estado', ['confirmado', 'check_in']) // <-- MÁS PRECISO
           .order('fecha_entrada');
@@ -778,9 +781,9 @@ class SupabaseService {
     DateTime fechaSalida,
   ) async {
     try {
-      print('Buscando habitaciones disponibles para ${fechaEntrada.toIso8601String().split('T')[0]} - ${fechaSalida.toIso8601String().split('T')[0]}');
+      print('🔍 Buscando habitaciones disponibles para ${fechaEntrada.toIso8601String().split('T')[0]} - ${fechaSalida.toIso8601String().split('T')[0]}');
       
-      // Primero obtener todas las habitaciones activas
+      // Primero obtener todas las habitaciones activas con información completa
       final todasHabitaciones = await _client
           .from('habitacion')
           .select('''
@@ -790,6 +793,8 @@ class SupabaseService {
           .eq('activa', true)
           .order('numero');
 
+      print('📋 Total habitaciones activas: ${todasHabitaciones.length}');
+
       // Luego obtener habitaciones ocupadas en el rango de fechas
       final habitacionesOcupadas = await _client
           .from('reserva')
@@ -797,20 +802,40 @@ class SupabaseService {
           .inFilter('estado', ['confirmado', 'check_in'])
           .or('and(fecha_entrada.lte.${fechaSalida.toIso8601String().split('T')[0]},fecha_salida.gt.${fechaEntrada.toIso8601String().split('T')[0]})');
 
+      print('🚫 Habitaciones ocupadas: ${habitacionesOcupadas.length}');
+
       // Crear conjunto de IDs ocupados
       final ocupadosIds = habitacionesOcupadas
           .map((r) => r['habitacion_id'])
           .toSet();
 
-      // Filtrar habitaciones disponibles
+      // Filtrar habitaciones disponibles y transformar datos
       final habitacionesDisponibles = todasHabitaciones
           .where((h) => !ocupadosIds.contains(h['id']))
+          .map((h) {
+            final propiedad = h['propiedad'] as Map<String, dynamic>?;
+            return {
+              'id': h['id'],
+              'numero': h['numero']?.toString() ?? 'N/A',
+              'tipo': h['tipo']?.toString() ?? 'Estándar',
+              'precio': (h['precio_noche'] ?? 0).toDouble(),
+              'capacidad': h['capacidad_maxima'] ?? 2,
+              'wifi_password': h['wifi_password'],
+              'propiedad_id': propiedad?['id'],
+              'propiedad_nombre': propiedad?['nombre'] ?? 'Sin propiedad',
+              'propiedad_direccion': propiedad?['direccion'] ?? '',
+            };
+          })
           .toList();
 
-      print('Habitaciones disponibles encontradas: ${habitacionesDisponibles.length}');
-      return List<Map<String, dynamic>>.from(habitacionesDisponibles);
+      print('✅ Habitaciones disponibles encontradas: ${habitacionesDisponibles.length}');
+      for (final h in habitacionesDisponibles) {
+        print('  - Hab ${h['numero']} (${h['tipo']}) - ${h['propiedad_nombre']} - S/. ${h['precio']}');
+      }
+      
+      return habitacionesDisponibles;
     } catch (e) {
-      print('Error obteniendo habitaciones disponibles: $e');
+      print('❌ Error obteniendo habitaciones disponibles: $e');
       throw Exception('Error al obtener habitaciones disponibles: $e');
     }
   }

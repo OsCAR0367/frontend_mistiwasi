@@ -455,7 +455,7 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
 
           const SizedBox(height: 20),
 
-          // Información del cliente
+          // Información del cliente expandida con más datos
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -463,61 +463,246 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.grey.shade200),
             ),
-            child: Row(
+            child: Column(
               children: [
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2196F3),
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _getInitials(reserva['cliente_nombre'] ?? 'N/A'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                // Header del cliente
+                Row(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF2196F3).withOpacity(0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        reserva['cliente_nombre'] ?? 'Cliente no disponible',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
+                      child: Center(
+                        child: Text(
+                          _getInitials(reserva['cliente_nombre'] ?? 'N/A'),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                          ),
                         ),
                       ),
-                      if (reserva['cliente_telefono'] != null) ...[
-                        const SizedBox(height: 4),
-                        Row(
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            reserva['cliente_nombre'] ?? 'Cliente no disponible',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A1A1A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          if (reserva['cliente_dni'] != null) ...[
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.badge_outlined,
+                                  color: Colors.grey.shade600,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'DNI: ${reserva['cliente_dni']}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (reserva['cliente_telefono'] != null) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.phone_outlined,
+                                  color: Colors.grey.shade600,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  reserva['cliente_telefono'],
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                          if (reserva['cliente_email'] != null) ...[
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.email_outlined,
+                                  color: Colors.grey.shade600,
+                                  size: 16,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    reserva['cliente_email'],
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Información adicional del cliente en cards
+                Row(
+                  children: [
+                    // ID Cliente
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF9C27B0).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF9C27B0).withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
                           children: [
                             Icon(
-                              Icons.phone,
-                              size: 16,
-                              color: Colors.grey.shade600,
+                              Icons.person_pin,
+                              color: const Color(0xFF9C27B0),
+                              size: 20,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(height: 4),
                             Text(
-                              reserva['cliente_telefono'],
+                              'Cliente #',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 10,
                                 color: Colors.grey.shade600,
+                              ),
+                            ),
+                            Text(
+                              '${reserva['cliente_id'] ?? 'N/A'}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF9C27B0),
                               ),
                             ),
                           ],
                         ),
-                      ],
-                    ],
-                  ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Saldo Pendiente (simulado - puedes conectar con datos reales)
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF4CAF50).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFF4CAF50).withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              color: const Color(0xFF4CAF50),
+                              size: 20,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Saldo',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            Text(
+                              'S/. 0.00',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF4CAF50),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Total de Reservas (simulado)
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF9800).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: const Color(0xFFFF9800).withOpacity(0.2),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.history,
+                              color: const Color(0xFFFF9800),
+                              size: 20,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Reservas',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            Text(
+                              '${(DateTime.now().difference(DateTime.parse(reserva['fecha_entrada']))).inDays + 1}',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFFF9800),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
