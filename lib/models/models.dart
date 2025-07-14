@@ -87,6 +87,38 @@ extension EstadoHabitacionExtension on EstadoHabitacion {
 }
 
 // === MODELOS ===
+
+// Helper methods para parsing seguro a nivel de módulo
+double _parseDouble(dynamic value) {
+  if (value == null) return 0.0;
+  if (value is double) return value;
+  if (value is int) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return 0.0;
+}
+
+int _parseInt(dynamic value) {
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is double) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  return 0;
+}
+
+DateTime _parseDateTime(dynamic value) {
+  if (value == null) return DateTime.now();
+  if (value is String) {
+    try {
+      return DateTime.parse(value);
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+  // Si el valor ya es un DateTime (aunque no debería pasar desde JSON), lo devolvemos
+  if (value is DateTime) return value;
+  return DateTime.now();
+}
+
 class Propiedad {
   final String id;
   final String nombre;
@@ -128,37 +160,15 @@ class Propiedad {
       rethrow;
     }
   }
-
-  // Helper methods para parsing seguro
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
-  }
-
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is String) {
-      try {
-        return DateTime.parse(value);
-      } catch (e) {
-        return DateTime.now();
-      }
-    }
-    return DateTime.now();
-  }
 }
 
 class Habitacion {
   final String id;
-  final String propiedadId;
   final String numero;
   final TipoHabitacion tipo;
-  final double precioNoche;
-  final int capacidadMaxima;
-  final EstadoHabitacion estado;
+  final int capacidad;
+  final double precio;
+  EstadoHabitacion estado;
   final String? observaciones;
   final String? detalle;
   final int piso;
@@ -166,15 +176,14 @@ class Habitacion {
   final bool activa;
   final DateTime fechaCreacion;
   final Propiedad? propiedad;
-  final Map<String, dynamic>? reservaActual; // Nueva propiedad
+  Map<String, dynamic>? reservaActual; // Nueva propiedad
 
   Habitacion({
     required this.id,
-    required this.propiedadId,
     required this.numero,
     required this.tipo,
-    required this.precioNoche,
-    required this.capacidadMaxima,
+    required this.capacidad,
+    required this.precio,
     required this.estado,
     this.observaciones,
     this.detalle,
@@ -190,13 +199,12 @@ class Habitacion {
     try {
       return Habitacion(
         id: json['id']?.toString() ?? '',
-        propiedadId: json['propiedad_id']?.toString() ?? '',
         numero: json['numero']?.toString() ?? '',
         tipo: TipoHabitacionExtension.fromString(
           json['tipo']?.toString() ?? 'normal',
         ),
-        precioNoche: _parseDouble(json['precio_noche']),
-        capacidadMaxima: _parseInt(json['capacidad_maxima']),
+        capacidad: _parseInt(json['capacidad_maxima']),
+        precio: _parseDouble(json['precio_noche']),
         estado: EstadoHabitacionExtension.fromString(
           json['estado']?.toString() ?? 'libre',
         ),
@@ -209,7 +217,9 @@ class Habitacion {
         propiedad: json['propiedad'] != null
             ? Propiedad.fromJson(json['propiedad'])
             : null,
-        reservaActual: json['reserva_actual'], // Nueva propiedad
+        reservaActual: json['reserva_actual'] != null
+            ? Map<String, dynamic>.from(json['reserva_actual'])
+            : null,
       );
     } catch (e) {
       print('❌ Error parsing Habitacion: $e');
@@ -220,34 +230,9 @@ class Habitacion {
 
   String get numeroCompleto => '$numero (${propiedad?.nombre ?? ''})';
 
-  // Helper methods para parsing seguro
-  static double _parseDouble(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
-  }
-
-  static int _parseInt(dynamic value) {
-    if (value == null) return 0;
-    if (value is int) return value;
-    if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? 0;
-    return 0;
-  }
-
-  static DateTime _parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is String) {
-      try {
-        return DateTime.parse(value);
-      } catch (e) {
-        return DateTime.now();
-      }
-    }
-    return DateTime.now();
-  }
+  // Getter para compatibilidad con código existente
+  double get precioNoche => precio;
+  String? get propiedadId => propiedad?.id;
 }
 
 class Cliente {
@@ -283,17 +268,17 @@ class Cliente {
 
   factory Cliente.fromJson(Map<String, dynamic> json) {
     return Cliente(
-      id: json['id'],
-      nombre: json['nombre'],
-      apellido: json['apellido'],
-      dni: json['dni'],
-      pasaporte: json['pasaporte'],
-      telefono: json['telefono'],
-      email: json['email'],
-      nacionalidad: json['nacionalidad'] ?? 'Peruana',
-      notas: json['notas'],
+      id: json['id']?.toString() ?? '',
+      nombre: json['nombre']?.toString() ?? 'Sin nombre',
+      apellido: json['apellido']?.toString(),
+      dni: json['dni']?.toString(),
+      pasaporte: json['pasaporte']?.toString(),
+      telefono: json['telefono']?.toString(),
+      email: json['email']?.toString(),
+      nacionalidad: json['nacionalidad']?.toString() ?? 'Peruana',
+      notas: json['notas']?.toString(),
       blacklist: json['blacklist'] ?? false,
-      fechaRegistro: DateTime.parse(json['fecha_registro']),
+      fechaRegistro: DateTime.parse(json['fecha_registro'] ?? DateTime.now().toIso8601String()),
       fechaUltimaEstadia: json['fecha_ultima_estadia'] != null
           ? DateTime.parse(json['fecha_ultima_estadia'])
           : null,
@@ -400,8 +385,31 @@ class Reserva {
     );
   }
 
-  int get diasEstadia => fechaSalida.difference(fechaEntrada).inDays;
-  int get diasRestantes => fechaSalida.difference(DateTime.now()).inDays;
+  // Cálculo correcto de días considerando fechas de calendario
+  int get diasEstadia {
+    final entrada = DateTime(
+      fechaEntrada.year,
+      fechaEntrada.month,
+      fechaEntrada.day,
+    );
+    final salida = DateTime(
+      fechaSalida.year,
+      fechaSalida.month,
+      fechaSalida.day,
+    );
+    return salida.difference(entrada).inDays;
+  }
+
+  int get diasRestantes {
+    final hoy = DateTime.now();
+    final salidaNormalizada = DateTime(
+      fechaSalida.year,
+      fechaSalida.month,
+      fechaSalida.day,
+    );
+    final hoyNormalizado = DateTime(hoy.year, hoy.month, hoy.day);
+    return salidaNormalizada.difference(hoyNormalizado).inDays;
+  }
 }
 
 class ItemInventario {

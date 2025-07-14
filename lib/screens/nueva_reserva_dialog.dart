@@ -6,6 +6,8 @@ import '../providers/dashboard_provider.dart';
 import '../providers/clientes_provider.dart';
 import '../models/models.dart';
 import '../services/supabase_service.dart';
+import '../widgets/confirmation_dialog.dart';
+import '../widgets/custom_snackbar.dart';
 
 class NuevaReservaDialog extends StatefulWidget {
   final Habitacion? habitacionPreseleccionada;
@@ -42,6 +44,21 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
   bool _clienteNuevo = true;
   String _codigoPais = '+51'; // Código de país editable
   String _filtroCliente = ''; // Filtro para búsqueda de clientes
+
+  // Función helper para calcular días de calendario correctamente
+  int _calcularDiasEstadia(DateTime fechaEntrada, DateTime fechaSalida) {
+    final entrada = DateTime(
+      fechaEntrada.year,
+      fechaEntrada.month,
+      fechaEntrada.day,
+    );
+    final salida = DateTime(
+      fechaSalida.year,
+      fechaSalida.month,
+      fechaSalida.day,
+    );
+    return salida.difference(entrada).inDays;
+  }
 
   @override
   void initState() {
@@ -419,7 +436,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
   }
 
   Widget _buildSeccionFechas() {
-    final diasEstadia = _fechaSalida.difference(_fechaEntrada).inDays;
+    final diasEstadia = _calcularDiasEstadia(_fechaEntrada, _fechaSalida);
     final fechasValidas = diasEstadia > 0;
 
     return Column(
@@ -1099,7 +1116,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
     final precioNoche = _precioPersonalizado > 0
         ? _precioPersonalizado
         : (_habitacionSeleccionada?.precioNoche ?? 0.0);
-    final diasEstadia = _fechaSalida.difference(_fechaEntrada).inDays;
+    final diasEstadia = _calcularDiasEstadia(_fechaEntrada, _fechaSalida);
     final subtotal = precioNoche * diasEstadia;
     final total = subtotal + _costoLimpieza;
 
@@ -1522,7 +1539,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
       }
 
       // Calcular totales con validación
-      final diasEstadia = _fechaSalida.difference(_fechaEntrada).inDays;
+      final diasEstadia = _calcularDiasEstadia(_fechaEntrada, _fechaSalida);
       final precioNoche = _precioPersonalizado > 0
           ? _precioPersonalizado
           : (_habitacionSeleccionada?.precioNoche ?? 0.0);
@@ -1590,7 +1607,7 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
     }
 
     // Validar fechas
-    final diasEstadia = _fechaSalida.difference(_fechaEntrada).inDays;
+    final diasEstadia = _calcularDiasEstadia(_fechaEntrada, _fechaSalida);
     if (diasEstadia <= 0) {
       return 'La fecha de salida debe ser posterior a la fecha de entrada';
     }
@@ -1726,40 +1743,14 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
   /// Muestra un mensaje de error
   void _mostrarError(String mensaje) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text(mensaje)),
-            ],
-          ),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 4),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      CustomSnackBar.showError(context: context, message: mensaje);
     }
   }
 
   /// Muestra un mensaje de éxito
   void _mostrarExito(String mensaje) {
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle_outline, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(child: Text(mensaje)),
-            ],
-          ),
-          backgroundColor: const Color(0xFF4CAF50),
-          duration: const Duration(seconds: 3),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      CustomSnackBar.showSuccess(context: context, message: mensaje);
     }
   }
 
@@ -1801,25 +1792,15 @@ class _NuevaReservaDialogState extends State<NuevaReservaDialog> {
   Future<void> _marcarComoMantenimiento() async {
     if (_habitacionSeleccionada == null) return;
 
-    final confirmar = await showDialog<bool>(
+    final confirmar = await ConfirmationDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar Mantenimiento'),
-        content: Text(
+      title: 'Confirmar Mantenimiento',
+      message:
           '¿Desea marcar la habitación ${_habitacionSeleccionada!.numero} como en mantenimiento?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
+      confirmText: 'Marcar en Mantenimiento',
+      cancelText: 'Cancelar',
+      type: ConfirmationDialogType.warning,
+      customIcon: Icons.build_outlined,
     );
 
     if (confirmar == true) {

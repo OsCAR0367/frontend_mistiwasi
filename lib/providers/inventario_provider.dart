@@ -63,7 +63,7 @@ class InventarioProvider with ChangeNotifier {
     }).toList();
   }
 
-  Future<void> crearItemInventario(Map<String, dynamic> itemData) async {
+  Future<void> crearItem(Map<String, dynamic> itemData) async {
     try {
       final nuevoItemData = await SupabaseService.crearInventario(itemData);
       final nuevoItem = ItemInventario.fromJson(nuevoItemData);
@@ -74,6 +74,7 @@ class InventarioProvider with ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      rethrow;
     }
   }
 
@@ -86,6 +87,22 @@ class InventarioProvider with ChangeNotifier {
     } catch (e) {
       _error = e.toString();
       notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> eliminarItem(String itemId) async {
+    try {
+      await SupabaseService.eliminarInventario(itemId);
+      
+      // Remover del estado local
+      _inventario.removeWhere((item) => item.id == itemId);
+      _aplicarFiltros();
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
     }
   }
 

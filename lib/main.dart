@@ -3,30 +3,30 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 // Solo importar window_manager si NO es web
 import 'package:window_manager/window_manager.dart';
-
-// Services
-import 'services/supabase_service.dart';
 
 // Providers
 import 'providers/dashboard_provider.dart';
 import 'providers/reservas_provider.dart';
 import 'providers/clientes_provider.dart';
 import 'providers/inventario_provider.dart';
-
 // Screens
 import 'screens/main_layout.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
- 
+  
+  // Inicializar localización para fechas
+  await initializeDateFormatting('es', null);
+
   // Configurar ventana solo para desktop (no web)
   if (!kIsWeb) {
     try {
       await windowManager.ensureInitialized();
-     
+
       WindowOptions windowOptions = const WindowOptions(
         size: Size(1400, 900),
         minimumSize: Size(1200, 800),
@@ -36,11 +36,11 @@ void main() async {
         titleBarStyle: TitleBarStyle.normal,
         title: 'MistiWasi - Sistema de Gestión',
       );
-     
+
       await windowManager.waitUntilReadyToShow(windowOptions, () async {
         await windowManager.show();
         await windowManager.focus();
-        
+
         // Configurar las opciones de ventana después de mostrarla
         await windowManager.setMaximizable(true);
         await windowManager.setMinimizable(true);
@@ -59,7 +59,8 @@ void main() async {
   try {
     await Supabase.initialize(
       url: 'https://jopucpjkfzhaxnwkfwuh.supabase.co',
-      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvcHVjcGprZnpoYXhud2tmd3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxNjY5MDksImV4cCI6MjA2Nzc0MjkwOX0.T4kNbDHusGSJriRkd1Nbr9eI17FWUeSwenvwZZT1iRI',
+      anonKey:
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvcHVjcGprZnpoYXhud2tmd3VoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxNjY5MDksImV4cCI6MjA2Nzc0MjkwOX0.T4kNbDHusGSJriRkd1Nbr9eI17FWUeSwenvwZZT1iRI',
     );
   } catch (e) {
     print('Error inicializando Supabase: $e');

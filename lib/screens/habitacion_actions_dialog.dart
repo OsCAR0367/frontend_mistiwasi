@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import '../models/models.dart';
 import '../services/supabase_service.dart';
 import '../providers/dashboard_provider.dart';
+import '../widgets/confirmation_dialog.dart';
+import '../widgets/custom_snackbar.dart';
 
 class HabitacionActionsDialog extends StatefulWidget {
   final Habitacion habitacion;
@@ -25,81 +27,353 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text('Habitación ${widget.habitacion.numero}'),
-      content: SingleChildScrollView(
+    print(
+      '🏠 HabitacionActionsDialog - Habitación: ${widget.habitacion.numero}',
+    );
+    print(
+      '📋 ReservaActual: ${widget.reservaActual != null ? widget.reservaActual!['id'] ?? 'sin ID' : 'null'}',
+    );
+
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      elevation: 24,
+      backgroundColor: Colors.transparent,
+      child: Container(
+        width: 500,
+        constraints: const BoxConstraints(maxHeight: 700),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Colors.white, const Color(0xFF4CAF50).withOpacity(0.02)],
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+            BoxShadow(
+              color: const Color(0xFF4CAF50).withOpacity(0.1),
+              blurRadius: 32,
+              offset: const Offset(0, 16),
+            ),
+          ],
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHabitacionInfo(),
-            const SizedBox(height: 16),
-            if (widget.reservaActual != null) _buildReservaInfo(),
-            const SizedBox(height: 16),
-            _buildAcciones(),
+            // Header profesional con gradiente
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF4CAF50), Color(0xFF45A049)],
+                ),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(24),
+                  topRight: Radius.circular(24),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4CAF50).withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Icono de habitación
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(30),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.hotel,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  // Información de la habitación
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Habitación ${widget.habitacion.numero}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              color: Colors.white.withOpacity(0.8),
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.habitacion.propiedad?.nombre ??
+                                  'Sin ubicación',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.white.withOpacity(0.9),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Botón cerrar
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Contenido principal
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildHabitacionInfo(),
+                    const SizedBox(height: 20),
+                    if (widget.reservaActual != null) ...[
+                      _buildReservaInfo(),
+                      const SizedBox(height: 20),
+                    ],
+                    _buildAcciones(),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cerrar'),
-        ),
-      ],
     );
   }
 
   Widget _buildHabitacionInfo() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Información de la Habitación',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.bed, size: 16),
-                const SizedBox(width: 8),
-                Text('Tipo: ${widget.habitacion.tipo}'),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(
-                  _getEstadoIcon(widget.habitacion.estado),
-                  size: 16,
-                  color: _getEstadoColor(widget.habitacion.estado),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título de la sección
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'Estado: ${widget.habitacion.estado.displayName}',
-                  style: TextStyle(
-                    color: _getEstadoColor(widget.habitacion.estado),
-                    fontWeight: FontWeight.w500,
+                child: Icon(
+                  Icons.info_outline,
+                  color: const Color(0xFF4CAF50),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Información de la Habitación',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Grid de información
+          Row(
+            children: [
+              // Tipo de habitación
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2196F3).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF2196F3).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(Icons.bed, color: const Color(0xFF2196F3), size: 24),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tipo',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.habitacion.tipo.displayName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2196F3),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.attach_money, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  'Precio: S/. ${widget.habitacion.precioNoche.toStringAsFixed(2)}',
+              ),
+
+              const SizedBox(width: 12),
+
+              // Estado
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: _getEstadoColor(
+                      widget.habitacion.estado,
+                    ).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: _getEstadoColor(
+                        widget.habitacion.estado,
+                      ).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        _getEstadoIcon(widget.habitacion.estado),
+                        color: _getEstadoColor(widget.habitacion.estado),
+                        size: 24,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Estado',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.habitacion.estado.displayName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: _getEstadoColor(widget.habitacion.estado),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Precio
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9800).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFFF9800).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.monetization_on,
+                        color: const Color(0xFFFF9800),
+                        size: 24,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Precio/Noche',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'S/. ${widget.habitacion.precioNoche.toStringAsFixed(2)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFF9800),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -109,82 +383,384 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
     final fechaEntrada = DateTime.parse(reserva['fecha_entrada']);
     final fechaSalida = DateTime.parse(reserva['fecha_salida']);
     final formatoFecha = DateFormat('dd/MM/yyyy');
+    final diasEstadia = fechaSalida.difference(fechaEntrada).inDays;
+    final total = (reserva['total'] ?? 0).toDouble();
 
-    return Card(
-      color: Colors.blue.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Reserva Actual',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2196F3).withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header de la reserva
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF2196F3), Color(0xFF1976D2)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2196F3).withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.event_seat,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.person, size: 16, color: Colors.blue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Cliente: ${reserva['cliente_nombre'] ?? 'N/A'}'),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reserva Actual',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                    Text(
+                      'Información del huésped',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Información del cliente
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade200),
             ),
-            const SizedBox(height: 4),
-            Row(
+            child: Row(
               children: [
-                const Icon(Icons.calendar_today, size: 16, color: Colors.blue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text('Check-in: ${formatoFecha.format(fechaEntrada)}'),
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2196F3),
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                  child: Center(
+                    child: Text(
+                      _getInitials(reserva['cliente_nombre'] ?? 'N/A'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.calendar_month, size: 16, color: Colors.blue),
-                const SizedBox(width: 8),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: Text('Check-out: ${formatoFecha.format(fechaSalida)}'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.attach_money, size: 16, color: Colors.blue),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Total: S/. ${(reserva['total'] ?? 0).toStringAsFixed(2)}',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reserva['cliente_nombre'] ?? 'Cliente no disponible',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A1A1A),
+                        ),
+                      ),
+                      if (reserva['cliente_telefono'] != null) ...[
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.phone,
+                              size: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              reserva['cliente_telefono'],
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+
+          const SizedBox(height: 16),
+
+          // Detalles de la reserva
+          Row(
+            children: [
+              // Check-in
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4CAF50).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF4CAF50).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.login,
+                        color: const Color(0xFF4CAF50),
+                        size: 20,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Check-in',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        formatoFecha.format(fechaEntrada),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF4CAF50),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Duración
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF9800).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFFF9800).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        color: const Color(0xFFFF9800),
+                        size: 20,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Duración',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$diasEstadia ${diasEstadia == 1 ? 'día' : 'días'}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFF9800),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Check-out
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF44336).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFF44336).withOpacity(0.2),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.logout,
+                        color: const Color(0xFFF44336),
+                        size: 20,
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Check-out',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        formatoFecha.format(fechaSalida),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFF44336),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Total
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF2196F3).withOpacity(0.1),
+                  const Color(0xFF2196F3).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF2196F3).withOpacity(0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.monetization_on,
+                  color: const Color(0xFF2196F3),
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Total: S/. ${total.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2196F3),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  String _getInitials(String name) {
+    if (name.isEmpty) return 'N/A';
+    final words = name.trim().split(' ');
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    } else {
+      return words[0].substring(0, 1).toUpperCase();
+    }
+  }
+
   Widget _buildAcciones() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Acciones Disponibles',
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        ..._getAccionesDisponibles(),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Título de la sección
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF9C27B0).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.touch_app,
+                  color: const Color(0xFF9C27B0),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Acciones Disponibles',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade800,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Lista de acciones
+          ..._getAccionesDisponibles(),
+        ],
+      ),
     );
   }
 
@@ -277,18 +853,81 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
     Color color,
     VoidCallback onPressed,
   ) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          onPressed: _isLoading ? null : onPressed,
-          icon: Icon(icono),
-          label: Text(texto),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: color,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      height: 60,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color, color.withOpacity(0.8)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Icon(icono, color: Colors.white, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    texto,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                if (_isLoading) ...[
+                  const SizedBox(width: 16),
+                  const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                ] else ...[
+                  const SizedBox(width: 16),
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
@@ -439,12 +1078,9 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
           widget.habitacion.id,
           'Habitación marcada para mantenimiento',
         );
-      } else {
-        // Para cambiar a libre, actualizar directamente
-        await SupabaseService.client
-            .from('habitacion')
-            .update({'estado': nuevoEstado.name})
-            .eq('id', widget.habitacion.id);
+      } else if (nuevoEstado == EstadoHabitacion.libre) {
+        // Para completar mantenimiento, usar el método específico
+        await SupabaseService.completarMantenimiento(widget.habitacion.id);
       }
 
       if (mounted) {
@@ -476,22 +1112,15 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
   }
 
   Future<void> _cancelarReserva() async {
-    final confirmar = await showDialog<bool>(
+    final confirmar = await ConfirmationDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirmar Cancelación'),
-        content: const Text('¿Está seguro de que desea cancelar esta reserva?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('No'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sí'),
-          ),
-        ],
-      ),
+      title: 'Confirmar Cancelación',
+      message:
+          '¿Está seguro de que desea cancelar esta reserva? Esta acción no se puede deshacer.',
+      confirmText: 'Sí, Cancelar',
+      cancelText: 'No',
+      type: ConfirmationDialogType.danger,
+      customIcon: Icons.cancel_outlined,
     );
 
     if (confirmar == true && widget.reservaActual != null) {
@@ -507,11 +1136,12 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.of(context).pop();
+          // Notificar al DashboardProvider para que recargue los datos
           Provider.of<DashboardProvider>(
             context,
             listen: false,
-          ).cargarDashboard();
+          ).loadDashboardData();
+          Navigator.of(context).pop();
         }
       } catch (e) {
         if (mounted) {

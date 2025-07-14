@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/reservas_provider.dart';
 import '../models/models.dart';
 import '../widgets/loading_widget.dart';
 import '../widgets/error_widget.dart';
-import '../services/supabase_service.dart';
 
 class OcupacionScreen extends StatefulWidget {
   const OcupacionScreen({super.key});
@@ -418,13 +418,17 @@ class _OcupacionScreenState extends State<OcupacionScreen> {
                               gradient: LinearGradient(
                                 colors: [
                                   _getColorForEstado(reserva.estado),
-                                  _getColorForEstado(reserva.estado).withOpacity(0.8),
+                                  _getColorForEstado(
+                                    reserva.estado,
+                                  ).withOpacity(0.8),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
-                                  color: _getColorForEstado(reserva.estado).withOpacity(0.3),
+                                  color: _getColorForEstado(
+                                    reserva.estado,
+                                  ).withOpacity(0.3),
                                   blurRadius: 2,
                                   offset: const Offset(0, 1),
                                 ),
@@ -569,7 +573,7 @@ class _OcupacionScreenState extends State<OcupacionScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            DateFormat('EEEE, dd MMMM yyyy', 'es').format(fecha),
+                            DateFormat('EEEE, dd MMMM yyyy', 'es_ES').format(fecha),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 20,
@@ -716,169 +720,44 @@ class _OcupacionScreenState extends State<OcupacionScreen> {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header con información de la fecha
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF4CAF50).withOpacity(0.1),
-                  const Color(0xFF4CAF50).withOpacity(0.05),
-                ],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFF4CAF50).withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.hotel,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Habitaciones Disponibles',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
-                        ),
-                      ),
-                      Text(
-                        'Para el ${DateFormat('EEEE, dd MMMM yyyy', 'es').format(fecha)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          Text(
+            'Habitaciones disponibles para ${DateFormat('dd/MM/yyyy').format(fecha)}',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
-
           const SizedBox(height: 20),
-
-          // Lista de habitaciones disponibles
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _getHabitacionesDisponiblesParaFecha(fecha),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(
-                          color: Color(0xFF4CAF50),
-                        ),
-                        SizedBox(height: 16),
-                        Text(
-                          'Buscando habitaciones disponibles...',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.construction,
+                    size: 64,
+                    color: Colors.orange.shade400,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Función en desarrollo',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.orange.shade600,
                     ),
-                  );
-                }
-
-                if (snapshot.hasError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red.shade400,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Error al cargar habitaciones',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.red.shade600,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          snapshot.error.toString(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Próximamente podrás crear reservas desde aquí',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey.shade600,
                     ),
-                  );
-                }
-
-                final habitaciones = snapshot.data ?? [];
-
-                if (habitaciones.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.hotel_outlined,
-                          size: 64,
-                          color: Colors.orange.shade400,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No hay habitaciones disponibles',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.orange.shade600,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Todas las habitaciones están ocupadas para esta fecha',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade600,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  itemCount: habitaciones.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final habitacion = habitaciones[index];
-                    return _buildHabitacionDisponibleCard(habitacion, fecha);
-                  },
-                );
-              },
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -1003,343 +882,5 @@ class _OcupacionScreenState extends State<OcupacionScreen> {
       case EstadoReserva.no_show:
         return 'No Show';
     }
-  }
-
-  // Método para obtener habitaciones disponibles para una fecha específica
-  Future<List<Map<String, dynamic>>> _getHabitacionesDisponiblesParaFecha(DateTime fecha) async {
-    try {
-      print('🏨 Buscando habitaciones disponibles para ${DateFormat('dd/MM/yyyy').format(fecha)}');
-      
-      final habitaciones = await SupabaseService.getHabitacionesDisponibles(fecha, fecha);
-      
-      print('📋 Habitaciones disponibles encontradas: ${habitaciones.length}');
-      for (final habitacion in habitaciones) {
-        print('  - ${habitacion['numero']} (${habitacion['tipo']}) - ${habitacion['propiedad_nombre']}');
-      }
-      
-      return habitaciones;
-    } catch (e) {
-      print('❌ Error al obtener habitaciones disponibles: $e');
-      rethrow;
-    }
-  }
-
-  // Widget para mostrar cada habitación disponible
-  Widget _buildHabitacionDisponibleCard(Map<String, dynamic> habitacion, DateTime fecha) {
-    final numero = habitacion['numero']?.toString() ?? 'N/A';
-    final tipo = habitacion['tipo']?.toString() ?? 'Sin tipo';
-    final propiedadNombre = habitacion['propiedad_nombre']?.toString() ?? 'Sin propiedad';
-    final capacidad = habitacion['capacidad']?.toString() ?? '0';
-    final precio = habitacion['precio']?.toString() ?? '0';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF4CAF50).withOpacity(0.2),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header de la habitación
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.hotel,
-                    color: const Color(0xFF4CAF50),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Habitación $numero',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
-                        ),
-                      ),
-                      Text(
-                        tipo,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'DISPONIBLE',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Información de la habitación
-            Row(
-              children: [
-                Expanded(
-                  child: _buildInfoItem(
-                    Icons.location_on_outlined,
-                    'Propiedad',
-                    propiedadNombre,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildInfoItem(
-                    Icons.people_outline,
-                    'Capacidad',
-                    '$capacidad personas',
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // Precio y botón de reservar
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Precio por noche',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                      Text(
-                        'S/ $precio',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF4CAF50),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton.icon(
-                  onPressed: () => _mostrarFormularioReserva(habitacion, fecha),
-                  icon: const Icon(
-                    Icons.add_circle_outline,
-                    size: 18,
-                  ),
-                  label: const Text('Reservar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4CAF50),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Widget helper para mostrar información de la habitación
-  Widget _buildInfoItem(IconData icon, String label, String value) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          size: 16,
-          color: Colors.grey.shade600,
-        ),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF1A1A1A),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Método para mostrar el formulario de nueva reserva
-  void _mostrarFormularioReserva(Map<String, dynamic> habitacion, DateTime fecha) {
-    showDialog(
-      context: context,
-      builder: (context) => _buildFormularioReservaDialog(habitacion, fecha),
-    );
-  }
-
-  // Dialog para crear nueva reserva
-  Widget _buildFormularioReservaDialog(Map<String, dynamic> habitacion, DateTime fecha) {
-    return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        width: 500,
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header del dialog
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF4CAF50).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    Icons.add_circle_outline,
-                    color: Color(0xFF4CAF50),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Nueva Reserva',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1A1A1A),
-                        ),
-                      ),
-                      Text(
-                        'Habitación ${habitacion['numero']} - ${habitacion['propiedad_nombre']}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  icon: const Icon(Icons.close),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // Contenido del formulario
-            Text(
-              'Formulario de reserva',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.orange.shade200,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.construction,
-                    color: Colors.orange.shade600,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'El formulario de reserva está en desarrollo. Próximamente podrás crear reservas desde aquí.',
-                      style: TextStyle(
-                        color: Colors.orange.shade700,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Botones de acción
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cerrar'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

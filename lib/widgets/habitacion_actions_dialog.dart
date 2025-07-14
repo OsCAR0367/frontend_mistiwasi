@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../models/models.dart';
 import '../services/supabase_service.dart';
 import '../providers/dashboard_provider.dart';
+import 'confirmation_dialog.dart';
+import 'custom_snackbar.dart';
 
 class HabitacionActionsDialog extends StatefulWidget {
   final Habitacion habitacion;
@@ -26,16 +28,20 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      backgroundColor: Colors.white, // Fondo blanco sólido
       child: Container(
         width: 500,
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Colors.white, _getStateColor().withOpacity(0.05)],
-          ),
+          color: Colors.white, // Asegurar fondo blanco
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -92,9 +98,9 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.blue.shade200),
+                  border: Border.all(color: Colors.grey.shade400),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,22 +318,17 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
         context.read<DashboardProvider>().cargarDashboard();
         Navigator.of(context).pop();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
+        CustomSnackBar.showSuccess(
+          context: context,
+          message:
               'Check-in realizado exitosamente para ${widget.reservaActual!['cliente_nombre']}',
-            ),
-            backgroundColor: Colors.green,
-          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al realizar check-in: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackBar.showError(
+          context: context,
+          message: 'Error al realizar check-in: $e',
         );
       }
     } finally {
@@ -347,22 +348,16 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
         context.read<DashboardProvider>().cargarDashboard();
         Navigator.of(context).pop();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Check-out realizado. Habitación programada para limpieza.',
-            ),
-            backgroundColor: Colors.orange,
-          ),
+        CustomSnackBar.showWarning(
+          context: context,
+          message: 'Check-out realizado. Habitación programada para limpieza.',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al realizar check-out: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackBar.showError(
+          context: context,
+          message: 'Error al realizar check-out: $e',
         );
       }
     } finally {
@@ -380,20 +375,16 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
         context.read<DashboardProvider>().cargarDashboard();
         Navigator.of(context).pop();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Limpieza completada. Habitación disponible.'),
-            backgroundColor: Colors.green,
-          ),
+        CustomSnackBar.showSuccess(
+          context: context,
+          message: 'Limpieza completada. Habitación disponible.',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al completar limpieza: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackBar.showError(
+          context: context,
+          message: 'Error al completar limpieza: $e',
         );
       }
     } finally {
@@ -419,20 +410,16 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
         context.read<DashboardProvider>().cargarDashboard();
         Navigator.of(context).pop();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Habitación marcada en mantenimiento.'),
-            backgroundColor: Colors.purple,
-          ),
+        CustomSnackBar.showWarning(
+          context: context,
+          message: 'Habitación marcada en mantenimiento.',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al marcar mantenimiento: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackBar.showError(
+          context: context,
+          message: 'Error al marcar mantenimiento: $e',
         );
       }
     } finally {
@@ -450,20 +437,16 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
         context.read<DashboardProvider>().cargarDashboard();
         Navigator.of(context).pop();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mantenimiento completado. Habitación disponible.'),
-            backgroundColor: Colors.green,
-          ),
+        CustomSnackBar.showSuccess(
+          context: context,
+          message: 'Mantenimiento completado. Habitación disponible.',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error al completar mantenimiento: $e'),
-            backgroundColor: Colors.red,
-          ),
+        CustomSnackBar.showError(
+          context: context,
+          message: 'Error al completar mantenimiento: $e',
         );
       }
     } finally {
@@ -471,23 +454,53 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
     }
   }
 
-  void _cancelarReserva() {
-    // Implementar cancelación de reserva
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Función de cancelación en desarrollo'),
-        backgroundColor: Colors.orange,
-      ),
+  Future<void> _cancelarReserva() async {
+    if (widget.reservaActual == null) return;
+
+    final confirmar = await ConfirmationDialog.show(
+      context: context,
+      title: 'Confirmar Cancelación',
+      message:
+          '¿Está seguro de que desea cancelar la reserva de ${widget.reservaActual!['cliente_nombre']}? Esta acción no se puede deshacer.',
+      confirmText: 'Sí, Cancelar',
+      cancelText: 'No',
+      type: ConfirmationDialogType.danger,
+      customIcon: Icons.cancel_outlined,
     );
+
+    if (confirmar != true) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await SupabaseService.cancelarReserva(widget.reservaActual!['id']);
+
+      if (mounted) {
+        context.read<DashboardProvider>().cargarDashboard();
+        Navigator.of(context).pop();
+
+        CustomSnackBar.showSuccess(
+          context: context,
+          message: 'Reserva cancelada exitosamente',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        CustomSnackBar.showError(
+          context: context,
+          message: 'Error al cancelar la reserva: $e',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   void _verDetalles() {
     // Implementar vista de detalles
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Vista de detalles en desarrollo'),
-        backgroundColor: Colors.blue,
-      ),
+    CustomSnackBar.showInfo(
+      context: context,
+      message: 'Vista de detalles en desarrollo',
     );
   }
 
@@ -498,40 +511,29 @@ class _HabitacionActionsDialogState extends State<HabitacionActionsDialog> {
 
   void _extenderMantenimiento() {
     // Implementar extensión de mantenimiento
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Extensión de mantenimiento en desarrollo'),
-        backgroundColor: Colors.orange,
-      ),
+    CustomSnackBar.showWarning(
+      context: context,
+      message: 'Extensión de mantenimiento en desarrollo',
     );
   }
 
   Future<String?> _mostrarDialogoObservaciones(String titulo) async {
-    final controller = TextEditingController();
-
-    return showDialog<String>(
+    return await InputDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(titulo),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            hintText: 'Ingrese las observaciones...',
-            border: OutlineInputBorder(),
-          ),
-          maxLines: 3,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Confirmar'),
-          ),
-        ],
-      ),
+      title: titulo,
+      message: 'Ingrese las observaciones para esta acción',
+      hintText: 'Observaciones...',
+      confirmText: 'Confirmar',
+      cancelText: 'Cancelar',
+      maxLines: 3,
+      type: ConfirmationDialogType.info,
+      customIcon: Icons.note_add_outlined,
+      validator: (value) {
+        if (value == null || value.trim().isEmpty) {
+          return 'Las observaciones son requeridas';
+        }
+        return null;
+      },
     );
   }
 }

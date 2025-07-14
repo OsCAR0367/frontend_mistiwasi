@@ -5,7 +5,7 @@ import '../models/models.dart';
 class DashboardProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
-  
+
   List<Habitacion> _habitaciones = [];
   List<Propiedad> _propiedades = [];
   Map<String, int> _estadisticas = {};
@@ -24,13 +24,13 @@ class DashboardProvider with ChangeNotifier {
 
     try {
       print('🔄 Iniciando carga del dashboard...');
-      
+
       final stats = await SupabaseService.getDashboardStats();
       print('📊 Stats obtenidas: $stats');
-      
+
       final propiedadesData = await SupabaseService.getPropiedades();
       print('🏠 Propiedades obtenidas: ${propiedadesData.length}');
-      
+
       // Validar que stats tenga la estructura correcta
       if (stats['habitaciones'] != null) {
         _habitaciones = (stats['habitaciones'] as List)
@@ -41,11 +41,9 @@ class DashboardProvider with ChangeNotifier {
         print('⚠️ No se encontraron habitaciones en stats');
         _habitaciones = [];
       }
-      
-      _propiedades = propiedadesData
-          .map((p) => Propiedad.fromJson(p))
-          .toList();
-      
+
+      _propiedades = propiedadesData.map((p) => Propiedad.fromJson(p)).toList();
+
       // Conversión segura de stats con validación de tipos
       _estadisticas = {
         'total': _convertToInt(stats['total_habitaciones']),
@@ -56,13 +54,12 @@ class DashboardProvider with ChangeNotifier {
         'mantenimiento': _convertToInt(stats['habitaciones_mantenimiento']),
         'reservas_activas': _convertToInt(stats['reservas_activas']),
       };
-      
+
       print('📈 Estadísticas procesadas: $_estadisticas');
-      
     } catch (e) {
       print('❌ Error en cargarDashboard: $e');
       _error = e.toString();
-      
+
       // Valores por defecto en caso de error
       _estadisticas = {
         'total': 0,
@@ -97,13 +94,18 @@ class DashboardProvider with ChangeNotifier {
   Map<EstadoHabitacion, int> estadisticasPorPropiedad(String propiedadId) {
     final habitacionesPropiedad = habitacionesPorPropiedad(propiedadId);
     final Map<EstadoHabitacion, int> stats = {};
-    
+
     for (var estado in EstadoHabitacion.values) {
       stats[estado] = habitacionesPropiedad
           .where((h) => h.estado == estado)
           .length;
     }
-    
+
     return stats;
+  }
+
+  // Alias para compatibilidad con código existente
+  Future<void> loadDashboardData() async {
+    await cargarDashboard();
   }
 }
